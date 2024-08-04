@@ -152,7 +152,18 @@ if uploaded_file is not None:
             audio_placeholder.empty()
             text_area_placeholder.empty()
 
-        st.success("Text updated and file saved!")
+        st.success("Text updated!")
+
+    jsonl_data = "\n".join(
+        json.dumps(entry.__dict__, ensure_ascii=False)
+        for entry in st.session_state.data
+    )
+    st.download_button(
+        label="Download data as JSONL",
+        data=jsonl_data.encode("utf-8"),
+        file_name="data.jsonl",
+        mime="application/jsonl",
+    )
 
 
 else:
