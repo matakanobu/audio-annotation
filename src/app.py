@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from enum import Enum
 import streamlit as st
@@ -26,13 +27,23 @@ class Record:
     invalid_audio: bool
 
 
-# JSONLデータを読み込む関数
-def load_data(jsonl_file):
+# tar.gzファイルを解凍し、jsonlファイルを取得する関数
+def load_data(tar_gz_file):
+    import tarfile
+    import io
+
+    with tarfile.open(fileobj=tar_gz_file, mode="r:gz") as tar:
+        # all extraction
+        tar.extractall()
+        jsonl_file_path = [f for f in tar.getnames() if f.endswith(".jsonl")][0]
+    logger.info(f"Extracted {jsonl_file_path}")
+    logger.info(f"{os.getcwd()}")
     data: list[Record] = []
-    for line in jsonl_file:
-        entry = json.loads(line)
-        entry["status"] = Status(entry["status"])  # Convert string to Status Enum
-        data.append(Record(**entry))
+    with open(jsonl_file_path, "r", encoding="utf-8") as jsonl_file:
+        for line in jsonl_file:
+            entry = json.loads(line)
+            entry["status"] = Status(entry["status"])  # Convert string to Status Enum
+            data.append(Record(**entry))
     return data
 
 
@@ -60,7 +71,7 @@ if "data" not in st.session_state:
     st.session_state.data = None
 
 # JSONLファイルのアップロード
-uploaded_file = st.file_uploader("Upload JSONL file", type="jsonl")
+uploaded_file = st.file_uploader("Upload JSONL file", type="gz")
 
 if uploaded_file is not None:
     # データの読み込み
